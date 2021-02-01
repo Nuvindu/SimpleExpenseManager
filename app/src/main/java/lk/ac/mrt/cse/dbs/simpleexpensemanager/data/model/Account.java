@@ -25,6 +25,9 @@ public class Account {
     private String accountHolderName;
     private double balance;
 
+    public Account(){
+    }
+
     public String getAccountNo() {
         return accountNo;
     }
