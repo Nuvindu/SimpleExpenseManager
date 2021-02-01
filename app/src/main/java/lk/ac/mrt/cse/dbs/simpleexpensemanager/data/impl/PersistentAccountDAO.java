@@ -75,46 +75,44 @@ public class PersistentAccountDAO implements AccountDAO {
 
     @Override
     public void addAccount(Account account) {
-        SQLiteDatabase sqLiteDatabase = database.getWritableDatabase();
+        SQLiteDatabase db = database.getReadableDatabase();
 
-        ContentValues val = new ContentValues();
 
-        val.put(database.getAccountNo(),account.getAccountNo());
-        val.put(database.getBankName(),account.getBankName());
-        val.put(database.getHolderName(),account.getAccountHolderName());
-        val.put(database.getBalance(),account.getBalance());
+        Cursor cursor = db.rawQuery("SELECT * FROM "
+                + database.getTableName() + " WHERE "
+                + database.getAccountNo()+" =?;", new String[]{account.getAccountNo()});
+        if (cursor != null && cursor.moveToFirst()) {
 
-        sqLiteDatabase.insert(database.getTableName(),null,val);
+            String accountNumber = cursor.getString(0);
 
-        sqLiteDatabase.close();
+        } else {
+            SQLiteDatabase sql = database.getWritableDatabase();
+            account.getBankName().replace("'"," ");
+            String INSERT_QUERY = "INSERT INTO " + database.getTableName() + " "
+                    + "(" + database.getAccountNo()
+                    +" ,"+database.getBankName()
+                    +" ,"+database.getHolderName()
+                    +" ,"+database.getBalance()
+                    +" )"
+                    + " VALUES ('"
+                    + account.getAccountNo() + "', '"
+                    + account.getBankName() + "', '"
+                    + account.getAccountHolderName()+ "', '"
+                    + account.getBalance() +"' )";
 
-//        SQLiteDatabase sql = database.getWritableDatabase();
-//        String INSERT_QUERY = "INSERT INTO " + database.getTableName() + " "
-//                + " VALUES ("
-//                + account.getAccountNo() + " ,"
-//                + account.getBankName() + " ,"
-//                + account.getAccountHolderName() + " ,"
-//                + account.getBalance()
-//                + " ) "
-//                + "WHERE NOT EXISTS "
-//                + "(SELECT " + database.getAccountNo() + " FROM "
-//                + database.getTableName()
-//                + " WHERE "+ database.getAccountNo() + " = "+ account.getAccountNo()
-//                + " )"
-//                + ")";
-//
-//
-//        sql.execSQL(INSERT_QUERY);
-//        sql.close();
+            sql.execSQL(INSERT_QUERY);
+            sql.close();
+        }
     }
 
     @Override
     public void removeAccount(String accountNo) throws InvalidAccountException {
         SQLiteDatabase db = database.getWritableDatabase();
-
+       //get the array of accounts which needs to be deleted
         Cursor cursor = db.rawQuery("SELECT * FROM " + database.getTableName() + " WHERE " + database.getAccountNo() + "=?;", new String[]{accountNo});
 
         if (cursor.moveToFirst()) {
+            //remove the accounts from the database
             db.delete(
                     database.getTableName(),
                     database.getAccountNo() + " = ?",
@@ -127,7 +125,7 @@ public class PersistentAccountDAO implements AccountDAO {
     }
 
     @Override
-    public void updateBalance(String accountNo, ExpenseType expenseType, double amount) throws InvalidAccountException {
+    public boolean updateBalance(String accountNo, ExpenseType expenseType, double amount) throws InvalidAccountException {
         SQLiteDatabase db = database.getWritableDatabase();
 
         Account account = this.getAccount(accountNo);
@@ -143,8 +141,14 @@ public class PersistentAccountDAO implements AccountDAO {
                     break;
             }
 
-            db.execSQL("UPDATE " + database.getTableName() + " SET " + database.getBalance() + " = ?" + " WHERE " + database.getAccountNo() + " = ?",
-                    new String[]{Double.toString(account.getBalance()), accountNo});
+            if(account.getBalance()<0){
+                throw new InvalidAccountException("Insufficient Credit");
+            }
+            else {
+                db.execSQL("UPDATE " + database.getTableName() + " SET " + database.getBalance() + " = ?" + " WHERE " + database.getAccountNo() + " = ?",
+                        new String[]{Double.toString(account.getBalance()), accountNo});
+                return true;
+            }
 
         } else {
             throw new InvalidAccountException("Invalid Account");

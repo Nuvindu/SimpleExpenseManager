@@ -92,8 +92,11 @@ public class DbHandler extends SQLiteOpenHelper {
                 + transactionType + " TEXT , "
                 + transactionAmount +" REAL CHECK ("
                 + transactionAmount +" > 0),"
-                + " FOREIGN KEY ("+ accountNo +") REFERENCES "+ TABLE_NAME +"("+ accountNo +")ON DELETE CASCADE\n" +
-                "ON UPDATE CASCADE);";
+                + " FOREIGN KEY ("
+                + accountNo +") REFERENCES "
+                + TABLE_NAME +"("
+                + accountNo +") ON DELETE CASCADE "
+                +"ON UPDATE CASCADE);";
         db.execSQL(TABLE_CREATE_QUERY2);
 
 

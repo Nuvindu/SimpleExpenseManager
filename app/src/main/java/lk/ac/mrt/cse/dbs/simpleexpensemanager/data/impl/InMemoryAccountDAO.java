@@ -71,7 +71,7 @@ public class InMemoryAccountDAO implements AccountDAO {
     }
 
     @Override
-    public void updateBalance(String accountNo, ExpenseType expenseType, double amount) throws InvalidAccountException {
+    public boolean updateBalance(String accountNo, ExpenseType expenseType, double amount) throws InvalidAccountException {
         if (!accounts.containsKey(accountNo)) {
             String msg = "Account " + accountNo + " is invalid.";
             throw new InvalidAccountException(msg);
@@ -87,5 +87,6 @@ public class InMemoryAccountDAO implements AccountDAO {
                 break;
         }
         accounts.put(accountNo, account);
+        return false;
     }
 }
