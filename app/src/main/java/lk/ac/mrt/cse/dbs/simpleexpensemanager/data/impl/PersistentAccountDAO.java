@@ -60,7 +60,11 @@ public class PersistentAccountDAO implements AccountDAO {
     @Override
     public Account getAccount(String accountNo) throws InvalidAccountException {
         SQLiteDatabase db = database.getReadableDatabase();
-        Cursor cursor = db.rawQuery("SELECT * FROM " + database.getTableName() + " WHERE " + database.getAccountNo()+ "=?;", new String[]{accountNo});
+        Cursor cursor = db.rawQuery("SELECT * FROM "
+                + database.getTableName()
+                + " WHERE " + database.getAccountNo()
+                + "=?;", new String[]{accountNo});
+
         Account account;
         if (cursor != null && cursor.moveToFirst()) {
 
@@ -77,7 +81,7 @@ public class PersistentAccountDAO implements AccountDAO {
     public void addAccount(Account account) {
         SQLiteDatabase db = database.getReadableDatabase();
 
-
+        //check whether the given account in the accountData table
         Cursor cursor = db.rawQuery("SELECT * FROM "
                 + database.getTableName() + " WHERE "
                 + database.getAccountNo()+" =?;", new String[]{account.getAccountNo()});
@@ -87,7 +91,7 @@ public class PersistentAccountDAO implements AccountDAO {
 
         } else {
             SQLiteDatabase sql = database.getWritableDatabase();
-            account.getBankName().replace("'"," ");
+            //insert the given account details to the database
             String INSERT_QUERY = "INSERT INTO " + database.getTableName() + " "
                     + "(" + database.getAccountNo()
                     +" ,"+database.getBankName()
@@ -109,7 +113,10 @@ public class PersistentAccountDAO implements AccountDAO {
     public void removeAccount(String accountNo) throws InvalidAccountException {
         SQLiteDatabase db = database.getWritableDatabase();
        //get the array of accounts which needs to be deleted
-        Cursor cursor = db.rawQuery("SELECT * FROM " + database.getTableName() + " WHERE " + database.getAccountNo() + "=?;", new String[]{accountNo});
+        Cursor cursor = db.rawQuery("SELECT * FROM "
+                + database.getTableName()
+                + " WHERE " + database.getAccountNo()
+                + "=?;", new String[]{accountNo});
 
         if (cursor.moveToFirst()) {
             //remove the accounts from the database
@@ -119,6 +126,7 @@ public class PersistentAccountDAO implements AccountDAO {
                     new String[]{accountNo}
             );
         } else {
+            //display an error if the account is already deleted
             throw new InvalidAccountException("Invalid Account");
         }
         cursor.close();
@@ -131,9 +139,10 @@ public class PersistentAccountDAO implements AccountDAO {
         Account account = this.getAccount(accountNo);
 
         if (account != null) {
-
+            //check the transaction type
             switch (expenseType) {
                 case EXPENSE:
+                    //get the current balance according to the transaction type
                     account.setBalance(account.getBalance() - amount);
                     break;
                 case INCOME:
@@ -141,12 +150,16 @@ public class PersistentAccountDAO implements AccountDAO {
                     break;
             }
 
-            if(account.getBalance()<0){
+            if(account.getBalance()<=0){
+                //error display when balance is low than zero
                 throw new InvalidAccountException("Insufficient Credit");
             }
             else {
-                db.execSQL("UPDATE " + database.getTableName() + " SET " + database.getBalance() + " = ?" + " WHERE " + database.getAccountNo() + " = ?",
-                        new String[]{Double.toString(account.getBalance()), accountNo});
+                //update the database with current balance
+                db.execSQL("UPDATE " + database.getTableName()
+                                + " SET " + database.getBalance()
+                                + " = ?" + " WHERE "
+                                + database.getAccountNo() + " = ?",new String[]{Double.toString(account.getBalance()), accountNo});
                 return true;
             }
 
